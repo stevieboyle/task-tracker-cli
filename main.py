@@ -42,6 +42,7 @@ class TaskManager:
             "id": self._get_next_id(),
             "description": description,
             "status": "todo",
+            "done": False,
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }
@@ -55,10 +56,13 @@ class TaskManager:
             print("No tasks found.")
             return
         
-        print(f"{'ID':<4} {'Status':<10} {'Description'}")
+        print(f"{'ID':<4} {'Done':<6} {'Description'}")
         print("-" * 50)
         for task in self.tasks:
-            print(f"{task['id']:<4} {task['status']:<10} {task['description']}")
+            # Handle backward compatibility for tasks without done field
+            done = task.get('done', False)
+            checkbox = "[x]" if done else "[ ]"
+            print(f"{task['id']:<4} {checkbox:<6} {task['description']}")
     
     def delete_task(self, task_id: int) -> None:
         """Delete a task by ID"""
@@ -70,6 +74,37 @@ class TaskManager:
             print(f"Task {task_id} deleted successfully.")
         else:
             print(f"Task with ID {task_id} not found.")
+    
+    def mark_done(self, task_id: int) -> None:
+        """Mark a task as done"""
+        task = self._find_task(task_id)
+        if task:
+            task['done'] = True
+            task['status'] = 'done'
+            task['updated_at'] = datetime.now().isoformat()
+            self._save_tasks()
+            print(f"Task {task_id} marked as done.")
+        else:
+            print(f"Task with ID {task_id} not found.")
+    
+    def mark_undone(self, task_id: int) -> None:
+        """Mark a task as undone"""
+        task = self._find_task(task_id)
+        if task:
+            task['done'] = False
+            task['status'] = 'todo'
+            task['updated_at'] = datetime.now().isoformat()
+            self._save_tasks()
+            print(f"Task {task_id} marked as undone.")
+        else:
+            print(f"Task with ID {task_id} not found.")
+    
+    def _find_task(self, task_id: int) -> Optional[Dict]:
+        """Find a task by ID"""
+        for task in self.tasks:
+            if task['id'] == task_id:
+                return task
+        return None
     
     def _get_next_id(self) -> int:
         """Get the next available ID"""
@@ -98,6 +133,14 @@ def main():
     delete_parser = subparsers.add_parser('delete', help='Delete a task')
     delete_parser.add_argument('id', type=int, help='Task ID to delete')
     
+    # Done command
+    done_parser = subparsers.add_parser('done', help='Mark a task as done')
+    done_parser.add_argument('id', type=int, help='Task ID to mark as done')
+    
+    # Undone command
+    undone_parser = subparsers.add_parser('undone', help='Mark a task as undone')
+    undone_parser.add_argument('id', type=int, help='Task ID to mark as undone')
+    
     args = parser.parse_args()
     
     # Show help if no command provided
@@ -115,6 +158,10 @@ def main():
         task_manager.list_tasks()
     elif args.command == 'delete':
         task_manager.delete_task(args.id)
+    elif args.command == 'done':
+        task_manager.mark_done(args.id)
+    elif args.command == 'undone':
+        task_manager.mark_undone(args.id)
 
 
 if __name__ == "__main__":
