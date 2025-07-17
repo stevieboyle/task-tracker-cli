@@ -36,11 +36,11 @@ class TaskManager:
         except IOError as e:
             print(f"Error saving tasks: {e}")
     
-    def add_task(self, description: str) -> None:
+    def add_task(self, title: str) -> None:
         """Add a new task"""
         task = {
             "id": self._get_next_id(),
-            "description": description,
+            "description": title,
             "status": "todo",
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
@@ -49,16 +49,15 @@ class TaskManager:
         self._save_tasks()
         print(f"Task added successfully (ID: {task['id']})")
     
-    def list_tasks(self) -> None:
+    def list_tasks(self) -> List[str]:
         """List all tasks"""
         if not self.tasks:
-            print("No tasks found.")
-            return
+            return []
         
-        print(f"{'ID':<4} {'Status':<10} {'Description'}")
-        print("-" * 50)
+        task_list = []
         for task in self.tasks:
-            print(f"{task['id']:<4} {task['status']:<10} {task['description']}")
+            task_list.append(f"{task['id']:<4} {task['status']:<10} {task['description']}")
+        return task_list
     
     def delete_task(self, task_id: int) -> None:
         """Delete a task by ID"""
@@ -112,7 +111,14 @@ def main():
     if args.command == 'add':
         task_manager.add_task(args.description)
     elif args.command == 'list':
-        task_manager.list_tasks()
+        tasks = task_manager.list_tasks()
+        if not tasks:
+            print("No tasks found.")
+        else:
+            print(f"{'ID':<4} {'Status':<10} {'Description'}")
+            print("-" * 50)
+            for task in tasks:
+                print(task)
     elif args.command == 'delete':
         task_manager.delete_task(args.id)
 
